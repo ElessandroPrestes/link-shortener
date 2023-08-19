@@ -1,0 +1,93 @@
+version: "3.8"
+services:
+    # imagem 
+    app:
+        container_name: app
+        image: app
+        build: 
+            args: 
+                user: elessandro
+                uid: 1000
+            context: ./
+            dockerfile: Dockerfile
+        restart: unless-stopped
+        working_dir: /var/www/
+        volumes:
+            - ./:/var/www
+        depends_on: 
+            - redis
+            - queue
+        networks: 
+            - api
+    
+    # nginx 
+    nginx:
+        container_name: nginx
+        image: nginx:alpine
+        restart: unless-stopped
+        ports: 
+            - 8000:80
+        volumes: 
+            - ./:/var/www
+            - ./docker/nginx/:/etc/nginx/conf.d/
+        networks: 
+            - api
+
+    # mysql 
+    mysql:
+        container_name: db-mysql
+        image: mysql:5.7.22
+        restart: unless-stopped
+        environment: 
+            MYSQL_DATABASE: ${DB_DATABASE}
+            MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+            MYSQL_PASSWORD: ${DB_PASSWORD}
+            MYSQL_USER: ${DB_USERNAME}
+        volumes: 
+            - ./.docker/mysql/dbdata:/var/lib/mysql
+        ports: 
+            - 3308:3306
+        networks: 
+            - api
+
+    # sgbd 
+    adminer:
+        container_name: adminer
+        image: adminer
+        restart: unless-stopped
+        ports:
+            - 8080:8080
+        depends_on: 
+            - mysql
+        networks: 
+            - api
+
+    # queue 
+    queue:
+        container_name: queue
+        image: queue
+        build: 
+            args: 
+                user: elessandro
+                uid: 1000
+            context: ./
+            dockerfile: Dockerfile
+        restart: unless-stopped
+        command: "php artisan queue:work"
+        volumes: 
+            - ./:/var/www
+        depends_on: 
+            - redis
+        networks: 
+            - api
+
+    #redis
+    redis:
+        container_name: redis
+        image: redis:latest
+        networks: 
+            - api
+
+networks: 
+    api:
+        driver: bridge
