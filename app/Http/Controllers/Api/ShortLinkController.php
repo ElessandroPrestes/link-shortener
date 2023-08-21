@@ -8,6 +8,20 @@ use App\Http\Resources\ShortLinkResource;
 use App\Services\ShortLinkService;
 use Illuminate\Http\Request;
 
+/**
+ * @OA\Info(
+ *      title="Household appliances",
+ *      version="1.0.0",
+ *      description="API for short links",
+ *      @OA\Contact(
+ *          email="elessandrodev@gmail.com"
+ *      ),
+ *      @OA\License(
+ *          name="MIT"
+ *      )
+ * )
+ */
+
 class ShortLinkController extends Controller
 {
     protected $shortLinkService;
@@ -16,12 +30,33 @@ class ShortLinkController extends Controller
     {
         $this->shortLinkService = $shortLinkService;
     }
+    
     /**
-     * Display a listing of the resource.
+     * @OA\Get(
+     *      path="/api/v1/links",
+     *      operationId="getAllLinks",
+     *      tags={"brands"},
+     *      description="Returns list of links",
+     *      @OA\Response(
+     *          response=200,
+     *          description="Links listed."
+     *       )
+     *     ),
+     *      @OA\Server(
+     *          url="http://localhost:8000",
+     * 
+     *      )
+     *
+     *@return ShortLinkResource
      */
     public function index()
     {
-        //
+        $links = $this->shortLinkService->indexLinks();
+
+        return response([
+            'data' => ShortLinkResource::collection($links),
+            'message' => 'Links listed'
+        ], 200);
     }
 
     /**

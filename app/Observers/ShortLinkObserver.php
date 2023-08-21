@@ -13,19 +13,10 @@ class ShortLinkObserver
      */
     public function creating(ShortLink $shortLink): void
     {
-
         // Garante que o identificador Único seja atribuido a cada link encurtado
         if (!$shortLink->identifier) {
             $shortLink->identifier = substr(str_shuffle('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'), 0, rand(6, 8));
         }
-
-        $cacheKey = "short-links:all"; 
-
-        $shortLinks = ShortLink::all(); 
-
-        Cache::rememberForever($cacheKey, function () use ($shortLinks) {
-            return $shortLinks;
-        });
     }
 
     /**

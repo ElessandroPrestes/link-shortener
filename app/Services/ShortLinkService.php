@@ -15,6 +15,11 @@ class ShortLinkService
         $this->shortLinkRepository = $shortLinkRepository;
     }
 
+    public function indexLinks()
+    {
+        return $this->shortLinkRepository->getAllLinks();
+    }
+
     public function storeLink(array $data)
     {
         if (!isset($data['identifier'])) {
