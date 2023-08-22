@@ -35,7 +35,7 @@ class ShortLinkController extends Controller
      * @OA\Get(
      *      path="/api/v1/links",
      *      operationId="getAllLinks",
-     *      tags={"brands"},
+     *      tags={"Links"},
      *      description="Returns list of links",
      *      @OA\Response(
      *          response=200,
@@ -62,7 +62,7 @@ class ShortLinkController extends Controller
     /**
     * @OA\Post(
     *      path="/api/v1/links",
-    *      tags={"Link"},
+    *      tags={"Links"},
     *      description="Create Link",
     *      @OA\RequestBody(
     *          required=true,
@@ -98,11 +98,45 @@ class ShortLinkController extends Controller
     }
 
     /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    * @OA\Get(
+    *     path="/api/v1/links/{link}", 
+    *     tags={"Links"},
+    *     description="Retrieve a Short Link by TEXT.",
+    *     operationId="getLinkByText",
+    *     @OA\Parameter(
+    *         name="ID", 
+    *         in="path", 
+    *         required=true, 
+    *         description="TEXT of the Short Link to be retrieved.",
+    *         @OA\Schema(
+    *             type="string" 
+    *         )
+    *     ),
+    *     @OA\Response(
+    *         response=200,
+    *         description="Short Link listed.",
+    *         @OA\JsonContent(
+    *            type="array",
+    *              @OA\Items(ref="#/components/schemas/ShortLinkResource")
+    *         )
+    *     ),
+    *     @OA\Response(
+    *         response=404,description="Short Link Not Found",
+    *          @OA\JsonContent(
+    *              type="object",
+    *              @OA\Property(property="message", type="string", example="Short Link Not Found")
+    *          )
+    *     ),
+    * )
+    */
+    public function show(string $link)
     {
-        //
+        $link = $this->shortLinkService->showLink($link);
+
+        return response([
+            'data'=> new ShortLinkResource($link),
+            'message' => 'Short Link listed'
+       ], 200);
     }
 
     /**

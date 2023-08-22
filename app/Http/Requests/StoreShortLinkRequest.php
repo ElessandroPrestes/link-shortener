@@ -22,7 +22,7 @@ class StoreShortLinkRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'original_url' => 'url|unique:short_links',
+            'original_url' => 'url',
             'identifier' => 'nullable|unique:short_links',
         ];
     }

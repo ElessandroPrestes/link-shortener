@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('short_links', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->string('original_url')->unique();
+            $table->string('original_url');
             $table->string('identifier')->unique();
             $table->timestamps();
             $table->softDeletes();

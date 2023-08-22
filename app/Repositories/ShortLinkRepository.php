@@ -6,6 +6,7 @@ use App\Interfaces\Repositories\ShortLinkInterface;
 use App\Models\ShortLink;
 use App\Services\CacheService;
 use Illuminate\Support\Facades\Cache;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class ShortLinkRepository implements ShortLinkInterface
 {
@@ -28,7 +29,8 @@ class ShortLinkRepository implements ShortLinkInterface
             return $this->cacheService->get($cacheKey);
         }
 
-        $query = $this->modelShortLink->orderBy('created_at', 'desc')->get();
+        $query = $this->modelShortLink->orderBy('created_at', 'desc')
+                                      ->get();
 
         $this->cacheService->put($cacheKey, $query, now()->addMinutes(10));
 
@@ -38,5 +40,24 @@ class ShortLinkRepository implements ShortLinkInterface
     public function createLink(array $data)
     {
         return $this->modelShortLink->create($data);
+    }
+
+    public function getLinkByText(string $link)
+    {
+        try {
+             $query =  $this->modelShortLink->where('original_url', 'LIKE', "%$link%")
+                                            ->orWhere('identifier', 'LIKE', "%$link%")
+                                            ->first();
+             if (!$query)
+                {
+                    throw new NotFoundHttpException('Short Link Not Found');
+                }
+
+            return $query;
+            
+        } catch (\Throwable $th) {
+            throw new NotFoundHttpException('Short Link Not Found', $th);
+        }
+        
     }
 }

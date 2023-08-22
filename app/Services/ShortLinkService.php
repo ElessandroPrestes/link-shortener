@@ -29,4 +29,9 @@ class ShortLinkService
         return $this->shortLinkRepository->createLink($data);
     }
 
+    public function showLink(string $link)
+    {
+        return $this->shortLinkRepository->getLinkByText($link);
+    }
+
 }

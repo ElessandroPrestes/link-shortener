@@ -2,16 +2,14 @@
 
 namespace Tests\Feature\Repositories;
 
-use App\Interfaces\Services\CacheServiceInterface;
 use App\Interfaces\Repositories\ShortLinkInterface;
 use App\Models\ShortLink;
 use App\Repositories\ShortLinkRepository;
 use App\Services\CacheService;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Mockery;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Tests\TestCase;
 
 class ShortLinkRepositoryTest extends TestCase
@@ -60,7 +58,10 @@ class ShortLinkRepositoryTest extends TestCase
      */
     public function create_short_link()
     {
-        $shortLink = ShortLink::factory()->raw();
+       $shortLink = [
+           'original_url' => 'https://www.google.com',
+           'identifier' => 'fake123',
+       ];
 
         $response = $this->shortLinkRepository->createLink($shortLink);
 
@@ -112,6 +113,38 @@ class ShortLinkRepositoryTest extends TestCase
     
             $this->assertEquals($dbResult, $result);
     }
-    
 
+    /**
+     * @test
+     */
+    public function it_throws_404_exception_when_short_link_not_found()
+    {
+        $this->expectException(NotFoundHttpException::class);
+
+        $this->shortLinkRepository->getLinkByText('non_ecziste_link');
+
+        $this->expectExceptionMessage('Short Link Not Found'); 
+
+        $this->get('v1/links/non_ecziste_link');
+        
+    }
+
+    /**
+     * @test
+     */
+    public function it_returns_short_link_when_found()
+    {
+        $shortLink = ShortLink::factory()->create([
+            'original_url' => 'https://test.com',
+            'identifier' => 'test123'
+        ]);
+
+        $retrievedLink = $this->shortLinkRepository->getLinkByText('test123');
+
+        $this->assertEquals($shortLink->original_url, $retrievedLink->original_url);
+
+        $this->assertEquals($shortLink->identifier, $retrievedLink->identifier);
+
+    }
+    
 }
