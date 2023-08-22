@@ -85,18 +85,18 @@
                 }
             }
         },
-        "/api/v1/links/{link}": {
+        "/api/v1/links/{id}": {
             "get": {
                 "tags": [
                     "Links"
                 ],
-                "description": "Retrieve a Short Link by TEXT.",
-                "operationId": "getLinkByText",
+                "description": "Retrieve a Short Link by Id.",
+                "operationId": "getLinkById",
                 "parameters": [
                     {
                         "name": "ID",
                         "in": "path",
-                        "description": "TEXT of the Short Link to be retrieved.",
+                        "description": "ID of the Short Link to be retrieved.",
                         "required": true,
                         "schema": {
                             "type": "string"
@@ -113,6 +113,164 @@
                                     "items": {
                                         "$ref": "#/components/schemas/ShortLinkResource"
                                     }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Short Link Not Found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Short Link Not Found"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/links/{link}": {
+            "get": {
+                "tags": [
+                    "Links"
+                ],
+                "description": "Retrieve a Short Link by Text.",
+                "operationId": "searchText",
+                "parameters": [
+                    {
+                        "name": "ID",
+                        "in": "path",
+                        "description": "Text of the Short Link to be retrieved.",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Short Link listed.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/ShortLinkResource"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Short Link Not Found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Short Link Not Found"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Links"
+                ],
+                "description": "Update Link",
+                "operationId": "update",
+                "parameters": [
+                    {
+                        "name": "ID",
+                        "in": "path",
+                        "description": "Link to be updated.",
+                        "required": true
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ShortLinkResource"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Forbidden"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "Short Link Updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Short Link Updated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unprocessable Entity"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "402": {
+                        "description": "Bad request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Bad request"
+                                        }
+                                    },
+                                    "type": "object"
                                 }
                             }
                         }

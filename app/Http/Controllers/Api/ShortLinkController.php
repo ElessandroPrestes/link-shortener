@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreShortLinkRequest;
+use App\Http\Requests\UpdateShortLinkRequest;
 use App\Http\Resources\ShortLinkResource;
 use App\Services\ShortLinkService;
 use Illuminate\Http\Request;
@@ -99,15 +100,15 @@ class ShortLinkController extends Controller
 
     /**
     * @OA\Get(
-    *     path="/api/v1/links/{link}", 
+    *     path="/api/v1/links/{id}", 
     *     tags={"Links"},
-    *     description="Retrieve a Short Link by TEXT.",
-    *     operationId="getLinkByText",
+    *     description="Retrieve a Short Link by Id.",
+    *     operationId="getLinkById",
     *     @OA\Parameter(
     *         name="ID", 
     *         in="path", 
     *         required=true, 
-    *         description="TEXT of the Short Link to be retrieved.",
+    *         description="ID of the Short Link to be retrieved.",
     *         @OA\Schema(
     *             type="string" 
     *         )
@@ -129,22 +130,122 @@ class ShortLinkController extends Controller
     *     ),
     * )
     */
-    public function show(string $link)
+    public function show(int $id)
     {
-        $link = $this->shortLinkService->showLink($link);
+        $id = $this->shortLinkService->showLink($id);
 
         return response([
-            'data'=> new ShortLinkResource($link),
+            'data'=> new ShortLinkResource($id),
             'message' => 'Short Link listed'
        ], 200);
     }
 
     /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+    * @OA\Get(
+    *     path="/api/v1/links/{link}", 
+    *     tags={"Links"},
+    *     description="Retrieve a Short Link by Text.",
+    *     operationId="searchText",
+    *     @OA\Parameter(
+    *         name="ID", 
+    *         in="path", 
+    *         required=true, 
+    *         description="Text of the Short Link to be retrieved.",
+    *         @OA\Schema(
+    *             type="string" 
+    *         )
+    *     ),
+    *     @OA\Response(
+    *         response=200,
+    *         description="Short Link listed.",
+    *         @OA\JsonContent(
+    *            type="array",
+    *              @OA\Items(ref="#/components/schemas/ShortLinkResource")
+    *         )
+    *     ),
+    *     @OA\Response(
+    *         response=404,description="Short Link Not Found",
+    *          @OA\JsonContent(
+    *              type="object",
+    *              @OA\Property(property="message", type="string", example="Short Link Not Found")
+    *          )
+    *     ),
+    * )
+    */
+    public function searchText(string $text)
     {
-        //
+        $link = $this->shortLinkService->searchText($text);
+
+        return response([
+            'data'=> new ShortLinkResource($link),
+            'message' => 'Short Link listed BY Text'
+       ], 200);
+    }
+
+    /**
+     * @OA\Put(
+     *     path="/api/v1/links/{link}",
+     *     tags={"Links"},
+     *     description="Update Link",
+     *     operationId="update",
+     *     @OA\Parameter(
+     *         name="ID", 
+     *         in="path", 
+     *         required=true, 
+     *         description="Link to be updated."
+     *     ),
+     *      @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *              ref="#/components/schemas/ShortLinkResource"
+     *          )
+     *     ),
+     *      @OA\Response(
+     *         response=403,description="Forbidden",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(
+     *                 property="error",type="string",example="Forbidden"
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,description="Short Link Updated",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(
+     *                 property="message",type="string",example="Short Link Updated"
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *          response=422,description="Unprocessable Entity",
+     *          @OA\JsonContent(
+     *              type="object",
+     *                  @OA\Property(property="message", type="string", example="Unprocessable Entity")
+     *          )
+     *       ),
+      *      @OA\Response(
+     *         response=402,description="Bad request",
+     *          @OA\JsonContent(
+     *              type="object",
+     *                  @OA\Property(property="message", type="string", example="Bad request")
+     *          )
+     *     ),
+      *     @OA\Response(
+     *         response=404,description="Short Link Not Found",
+     *          @OA\JsonContent(
+     *              type="object",
+     *                  @OA\Property(property="message", type="string", example="Short Link Not Found")
+     *          )
+     *     ),
+     * )
+     */
+    public function update(UpdateShortLinkRequest $request, string $text)
+    {
+        $this->shortLinkService->updateLink($text, $request->validated());
+
+        return response()->json(['message' => 'Short Link Updated'], 200);
     }
 
     /**

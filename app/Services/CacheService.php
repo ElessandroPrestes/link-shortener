@@ -28,4 +28,9 @@ class CacheService implements CacheServiceInterface
     {
         return Cache::forget($key);
     }
+
+    public function has(string $key)
+    {
+        return Cache::has($key);
+    }
 }

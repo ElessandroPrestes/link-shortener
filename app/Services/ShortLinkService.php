@@ -29,9 +29,19 @@ class ShortLinkService
         return $this->shortLinkRepository->createLink($data);
     }
 
-    public function showLink(string $link)
+    public function searchText(string $link)
     {
-        return $this->shortLinkRepository->getLinkByText($link);
+        return $this->shortLinkRepository->searchText($link);
+    }
+
+    public function updateLink(string $link, array $data)
+    {
+        return $this->shortLinkRepository->updateLink($link, $data);
+    }
+
+    public function showLink(int $id)
+    {
+        return $this->shortLinkRepository->getLinkById($id);
     }
 
 }

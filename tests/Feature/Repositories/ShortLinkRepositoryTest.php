@@ -8,13 +8,15 @@ use App\Repositories\ShortLinkRepository;
 use App\Services\CacheService;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Tests\TestCase;
 
 class ShortLinkRepositoryTest extends TestCase
 {
-    
+    use RefreshDatabase;
+
     protected $shortLinkRepository;
 
     protected $cacheService;
@@ -117,11 +119,11 @@ class ShortLinkRepositoryTest extends TestCase
     /**
      * @test
      */
-    public function it_throws_404_exception_when_short_link_not_found()
+    public function it_throws_404_exception_when_short_link_not_found_by_text()
     {
         $this->expectException(NotFoundHttpException::class);
 
-        $this->shortLinkRepository->getLinkByText('non_ecziste_link');
+        $this->shortLinkRepository->searchText('non_ecziste_link');
 
         $this->expectExceptionMessage('Short Link Not Found'); 
 
@@ -132,19 +134,82 @@ class ShortLinkRepositoryTest extends TestCase
     /**
      * @test
      */
-    public function it_returns_short_link_when_found()
+    public function it_returns_short_link_when_found_by_text()
     {
         $shortLink = ShortLink::factory()->create([
             'original_url' => 'https://test.com',
             'identifier' => 'test123'
         ]);
 
-        $retrievedLink = $this->shortLinkRepository->getLinkByText('test123');
+        $retrievedLink = $this->shortLinkRepository->searchText('test123');
 
         $this->assertEquals($shortLink->original_url, $retrievedLink->original_url);
 
         $this->assertEquals($shortLink->identifier, $retrievedLink->identifier);
 
+    }
+
+    /**
+     * @test
+     */
+    public function it_throws_404_exception_when_short_link_not_found_by_id()
+    {
+        $non_ecziste_link_id  = 999; 
+
+        $this->expectException(NotFoundHttpException::class);
+    
+        $this->shortLinkRepository->getLinkById($non_ecziste_link_id );
+    
+        
+    }
+    /**
+      * @test
+      */
+      public function it_returns_short_link_when_found_by_id()
+      {
+          $link = ShortLink::factory()->create();
+  
+          $response = $this->shortLinkRepository->getLinkById($link->id);
+  
+          $this->assertIsObject($response);
+      }
+      /**
+       * @test
+       */
+      public function it_throws_404_exception_when_trying_to_update_by_short_link_id_not_found()
+      {
+            $nonExistentLinkId = 888; 
+
+            $dataToUpdate = [
+                'original_url' => 'https://updated-link.com',
+            ];
+
+            $this->expectException(NotFoundHttpException::class);
+
+            $this->shortLinkRepository->updateLink($nonExistentLinkId, $dataToUpdate);
+      }
+
+     /**
+      * @test
+      */
+      public function it_updates_short_link_when_found_by_id()
+    {
+        $link = ShortLink::factory()->create();
+
+        $dataToUpdate = [
+            'original_url' => 'https://updated-link.com',
+        ];
+
+        $response = $this->shortLinkRepository->updateLink($link->id, $dataToUpdate);
+
+        $this->assertNotNull($response);
+
+        $this->assertIsObject($response);
+
+        $this->assertDatabaseHas('short_links', [
+            'id' => $link->id,
+            'original_url' => $dataToUpdate['original_url'],
+        ]);
     }
     
 }

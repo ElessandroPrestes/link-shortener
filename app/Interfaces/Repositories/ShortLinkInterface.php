@@ -10,5 +10,9 @@ interface ShortLinkInterface
     
     public function createLink(array $data);
 
-    public function getLinkByText(string $link);
+    public function searchText(string $link);
+
+    public function getLinkById(int $id);
+
+    public function updateLink(string $link, array $data);
 }
