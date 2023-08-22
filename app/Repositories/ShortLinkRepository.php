@@ -5,7 +5,6 @@ namespace App\Repositories;
 use App\Interfaces\Repositories\ShortLinkInterface;
 use App\Models\ShortLink;
 use App\Services\CacheService;
-use Illuminate\Support\Facades\Cache;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class ShortLinkRepository implements ShortLinkInterface
@@ -14,9 +13,9 @@ class ShortLinkRepository implements ShortLinkInterface
     
     protected $cacheService;
 
-    public function __construct(ShortLink $link, CacheService $cache)
+    public function __construct(ShortLink $shortLink, CacheService $cache)
     {
-        $this->modelShortLink = $link;
+        $this->modelShortLink = $shortLink;
 
         $this->cacheService = $cache;
     }
@@ -31,6 +30,10 @@ class ShortLinkRepository implements ShortLinkInterface
 
         $query = $this->modelShortLink->orderBy('created_at', 'desc')
                                       ->get();
+        
+        if ($query->isEmpty()) {
+            throw new NotFoundHttpException('No Short Links found');
+        }
 
         $this->cacheService->put($cacheKey, $query, now()->addMinutes(10));
 
@@ -90,12 +93,39 @@ class ShortLinkRepository implements ShortLinkInterface
 
     }
 
-    public function updateLink(string $link, array $data)
+    public function updateLink(int $id, array $data)
     {
-        $shortLink = $this->getLinkById($link);
+        try {
+            $shortLink = $this->getLinkById($id);
+            
+            $shortLink->update($data);
+    
+            return $shortLink;
+        } catch (\Throwable $th) {
+            throw new NotFoundHttpException('Short Link not found');
+        }
+    }
 
-        $shortLink->update($data);
+    public function deleteLink(int $id)
+    {
+        try {
+            $shortLink = $this->getLinkById($id);
+    
+            $this->cacheService->forget('short-link:' . $id);
 
-        return $shortLink;
+            $this->cacheService->forget('short-links:all');
+    
+            $deleted = $shortLink->delete();
+
+            if (!$deleted) {
+                throw new \Exception('Failed to delete Short Link');
+            }
+            
+            return true;
+
+        } catch (\Throwable $th) {
+
+            throw new NotFoundHttpException('Short Link not found');
+        }
     }
 }

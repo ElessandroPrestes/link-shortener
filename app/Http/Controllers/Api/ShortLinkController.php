@@ -253,6 +253,8 @@ class ShortLinkController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $this->shortLinkService->destroyLink($id);
+
+        return response()->json(['message' => 'Deleted'], 204);
     }
 }

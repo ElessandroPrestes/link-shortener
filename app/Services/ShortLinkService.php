@@ -44,4 +44,11 @@ class ShortLinkService
         return $this->shortLinkRepository->getLinkById($id);
     }
 
+
+    public function destroyLink(int $id)
+    {
+        return $this->shortLinkRepository->deleteLink($id);
+    }
+   
+
 }

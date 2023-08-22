@@ -211,5 +211,32 @@ class ShortLinkRepositoryTest extends TestCase
             'original_url' => $dataToUpdate['original_url'],
         ]);
     }
+
+     /**
+     * @test
+     */
+    public function it_throws_404_exception_when_trying_to_deleted_by_short_link_id_not_found()
+    {
+        $this->expectException(NotFoundHttpException::class);
+
+        $this->shortLinkRepository->deleteLink(888);
+
+    }
+
+     /**
+     * @test
+     */
+    public function it_deleted_short_link_when_found_by_id()
+    {
+        $link = ShortLink::factory()->create();
+
+        $deleted = $this->shortLinkRepository->deleteLink($link->id);
+
+        $this->assertTrue($deleted);
+
+        $this->assertDatabaseMissing('short_links', [
+            $deleted == $link->id
+        ]);
+    }
     
 }

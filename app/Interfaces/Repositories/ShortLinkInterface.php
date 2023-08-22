@@ -14,5 +14,7 @@ interface ShortLinkInterface
 
     public function getLinkById(int $id);
 
-    public function updateLink(string $link, array $data);
+    public function updateLink(int $id, array $data);
+
+    public function deleteLink(int $id);
 }
