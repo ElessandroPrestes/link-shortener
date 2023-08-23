@@ -2,9 +2,13 @@
 
 namespace App\Services;
 
-
+use App\Jobs\CreateShortLinkJob;
+use App\Jobs\UpdateShortLinkJob;
+use Illuminate\Support\Facades\Bus;
 use App\Repositories\ShortLinkRepository;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class ShortLinkService
 {
@@ -26,7 +30,8 @@ class ShortLinkService
             $data['identifier'] = Str::random(rand(6, 8));
         }
 
-        return $this->shortLinkRepository->createLink($data);
+        return Bus::dispatch(new CreateShortLinkJob($data));
+
     }
 
     public function searchText(string $link)
@@ -34,9 +39,21 @@ class ShortLinkService
         return $this->shortLinkRepository->searchText($link);
     }
 
-    public function updateLink(string $link, array $data)
+    public function updateLink(int $id, array $data)
     {
-        return $this->shortLinkRepository->updateLink($link, $data);
+        
+        if ($this->shortLinkRepository->getLinkById($id))
+         {
+            if (!isset($data['identifier']))
+             {
+                $data['identifier'] = Str::random(rand(6, 8));
+            }
+        
+            Bus::dispatch(new UpdateShortLinkJob($id, $data));
+        
+        } else {
+            throw new NotFoundHttpException('Short Link Not Found');
+        }
     }
 
     public function showLink(int $id)

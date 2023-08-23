@@ -22,7 +22,7 @@ class StoreShortLinkRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'original_url' => 'url',
+            'original_url' => 'required|url',
             'identifier' => 'nullable|unique:short_links|min:6|max:8',
         ];
     }
@@ -30,6 +30,7 @@ class StoreShortLinkRequest extends FormRequest
     public function messages()
     {
         return [
+            'original_url.required' => 'The URL is required.',
             'original_url.url' => 'The link must be a valid URL.',
             'identifier.unique' => 'The identifier has already been taken.',
             'identifier.min' => 'The identifier must be at least 6 characters.',

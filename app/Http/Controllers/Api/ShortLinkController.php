@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateShortLinkRequest;
 use App\Http\Resources\ShortLinkResource;
 use App\Services\ShortLinkService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 /**
  * @OA\Info(
@@ -93,8 +94,7 @@ class ShortLinkController extends Controller
         $shortLink = $this->shortLinkService->storeLink($request->validated());
 
         return response([
-            'data'=>new ShortLinkResource($shortLink),
-            'message' => 'Link Register'
+            'message' => 'Short Link Registered'
         ], 201);
     }
 
@@ -117,8 +117,8 @@ class ShortLinkController extends Controller
     *         response=200,
     *         description="Short Link listed.",
     *         @OA\JsonContent(
-    *            type="array",
-    *              @OA\Items(ref="#/components/schemas/ShortLinkResource")
+    *            type="object",
+    *              @OA\Property(property="message", type="string", example="Short Link Registered")
     *         )
     *     ),
     *     @OA\Response(
@@ -141,50 +141,8 @@ class ShortLinkController extends Controller
     }
 
     /**
-    * @OA\Get(
-    *     path="/api/v1/links/{link}", 
-    *     tags={"Links"},
-    *     description="Retrieve a Short Link by Text.",
-    *     operationId="searchText",
-    *     @OA\Parameter(
-    *         name="ID", 
-    *         in="path", 
-    *         required=true, 
-    *         description="Text of the Short Link to be retrieved.",
-    *         @OA\Schema(
-    *             type="string" 
-    *         )
-    *     ),
-    *     @OA\Response(
-    *         response=200,
-    *         description="Short Link listed.",
-    *         @OA\JsonContent(
-    *            type="array",
-    *              @OA\Items(ref="#/components/schemas/ShortLinkResource")
-    *         )
-    *     ),
-    *     @OA\Response(
-    *         response=404,description="Short Link Not Found",
-    *          @OA\JsonContent(
-    *              type="object",
-    *              @OA\Property(property="message", type="string", example="Short Link Not Found")
-    *          )
-    *     ),
-    * )
-    */
-    public function searchText(string $text)
-    {
-        $link = $this->shortLinkService->searchText($text);
-
-        return response([
-            'data'=> new ShortLinkResource($link),
-            'message' => 'Short Link listed BY Text'
-       ], 200);
-    }
-
-    /**
      * @OA\Put(
-     *     path="/api/v1/links/{link}",
+     *     path="/api/v1/links/{id}",
      *     tags={"Links"},
      *     description="Update Link",
      *     operationId="update",
@@ -241,20 +199,91 @@ class ShortLinkController extends Controller
      *     ),
      * )
      */
-    public function update(UpdateShortLinkRequest $request, string $text)
+    public function update(UpdateShortLinkRequest $request, int $id)
     {
-        $this->shortLinkService->updateLink($text, $request->validated());
-
-        return response()->json(['message' => 'Short Link Updated'], 200);
+       $this->shortLinkService->updateLink($id, $request->validated());
+       Log::info('Request Data:', $request->all());
+      
+        return response()->json([
+            'message' => 'Short Link Updated'
+        ], 200);
     }
 
     /**
-     * Remove the specified resource from storage.
-     */
+ * @OA\Delete(
+ *     path="/api/v1/links/{id}",
+ *     tags={"Links"},
+ *     description="Delete a short link",
+ *     operationId="destroyShortLink",
+ *     @OA\Parameter(
+ *         name="id",
+ *         in="path",
+ *         required=true,
+ *         description="The short link to delete",
+ *         @OA\Schema(type="string")
+ *     ),
+ *     @OA\Response(
+ *         response=204,
+ *         description="No content",
+ *         @OA\JsonContent()
+ *     ),
+ *     @OA\Response(
+ *         response=404,
+ *         description="Short link not found",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="message", type="string", example="Short link not found")
+ *         )
+ *     ),
+ * )
+ */
     public function destroy(string $id)
     {
         $this->shortLinkService->destroyLink($id);
 
-        return response()->json(['message' => 'Deleted'], 204);
+        return response()->json([
+            'message' => 'Deleted'
+        ], 204);
+    }
+
+    /**
+    * @OA\Get(
+    *     path="/api/v1/links/{link}", 
+    *     tags={"Links"},
+    *     description="Retrieve a Short Link by Text.",
+    *     operationId="searchText",
+    *     @OA\Parameter(
+    *         name="ID", 
+    *         in="path", 
+    *         required=true, 
+    *         description="Text of the Short Link to be retrieved.",
+    *         @OA\Schema(
+    *             type="string" 
+    *         )
+    *     ),
+    *     @OA\Response(
+    *         response=200,
+    *         description="Short Link listed.",
+    *         @OA\JsonContent(
+    *            type="array",
+    *              @OA\Items(ref="#/components/schemas/ShortLinkResource")
+    *         )
+    *     ),
+    *     @OA\Response(
+    *         response=404,description="Short Link Not Found",
+    *          @OA\JsonContent(
+    *              type="object",
+    *              @OA\Property(property="message", type="string", example="Short Link Not Found")
+    *          )
+    *     ),
+    * )
+    */
+    public function searchText(string $text)
+    {
+        $link = $this->shortLinkService->searchText($text);
+
+        return response([
+            'data'=> ShortLinkResource::collection($link),
+            'message' => 'Short Link listed BY Text'
+       ], 200);
     }
 }

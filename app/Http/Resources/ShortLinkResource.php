@@ -13,7 +13,6 @@ class ShortLinkResource extends JsonResource
      *     schema="ShortLinkResource",
      *     title="ShortLinkResource",
      *     @OA\Property(property="id", type="integer"),
-     *     @OA\Property(property="uuid", type="string"),
      *     @OA\Property(property="original_link", type="string"),
      *     @OA\Property(property="created_at", type="string", format="date-time"),
      *     @OA\Property(property="updated_at", type="string", format="date-time"),

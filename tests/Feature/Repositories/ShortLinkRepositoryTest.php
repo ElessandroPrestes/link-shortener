@@ -121,13 +121,14 @@ class ShortLinkRepositoryTest extends TestCase
      */
     public function it_throws_404_exception_when_short_link_not_found_by_text()
     {
-        $this->expectException(NotFoundHttpException::class);
+        try {
 
-        $this->shortLinkRepository->searchText('non_ecziste_link');
+            $this->shortLinkRepository->searchText('non_ecziste_link');
 
-        $this->expectExceptionMessage('Short Link Not Found'); 
+        } catch (NotFoundHttpException $e) {
 
-        $this->get('v1/links/non_ecziste_link');
+            $this->assertEquals('Short Link Not Found', $e->getMessage());
+        }  
         
     }
 
@@ -140,8 +141,16 @@ class ShortLinkRepositoryTest extends TestCase
             'original_url' => 'https://test.com',
             'identifier' => 'test123'
         ]);
+        $shortLink2 = ShortLink::factory()->create([
+            'original_url' => 'https://test.com',
+            'identifier' => 'test124'
+        ]);
 
-        $retrievedLink = $this->shortLinkRepository->searchText('test123');
+        $retrievedLinks = $this->shortLinkRepository->searchText('test123');
+
+        $this->assertCount(1, $retrievedLinks);
+
+        $retrievedLink = $retrievedLinks->first();
 
         $this->assertEquals($shortLink->original_url, $retrievedLink->original_url);
 

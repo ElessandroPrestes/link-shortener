@@ -5,7 +5,11 @@ namespace App\Repositories;
 use App\Interfaces\Repositories\ShortLinkInterface;
 use App\Models\ShortLink;
 use App\Services\CacheService;
+use Illuminate\Database\Eloquent\Model;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+
 
 class ShortLinkRepository implements ShortLinkInterface
 {
@@ -56,7 +60,8 @@ class ShortLinkRepository implements ShortLinkInterface
         try {
              $query =  $this->modelShortLink->where('original_url', 'LIKE', "%$link%")
                                             ->orWhere('identifier', 'LIKE', "%$link%")
-                                            ->first();
+                                            ->orderBy('created_at', 'desc')
+                                            ->get();
              if (!$query)
                 {
                     throw new NotFoundHttpException('Short Link Not Found');
@@ -78,15 +83,15 @@ class ShortLinkRepository implements ShortLinkInterface
 
         if ($this->cacheService->has($cacheKey)) {
             return $this->cacheService->get($cacheKey);
-        }
+       }
 
         try {
 
-            $query = $this->modelShortLink->where('id', $id)->firstOrFail();
-
+            $query = $this->modelShortLink->findOrFail($id);
+            
             return $query;
 
-        } catch (\Throwable $th) {
+        } catch (ModelNotFoundException $th) {
 
             throw new NotFoundHttpException('Short Link Not Found');
         }
@@ -95,15 +100,11 @@ class ShortLinkRepository implements ShortLinkInterface
 
     public function updateLink(int $id, array $data)
     {
-        try {
-            $shortLink = $this->getLinkById($id);
-            
-            $shortLink->update($data);
+        $shortLink = $this->getLinkById($id);
     
-            return $shortLink;
-        } catch (\Throwable $th) {
-            throw new NotFoundHttpException('Short Link not found');
-        }
+        $shortLink->update($data);
+        
+        return $shortLink;
     }
 
     public function deleteLink(int $id)

@@ -19,6 +19,13 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::apiResource('v1/links', ShortLinkController::class);
-Route::get('v1/links/{link}', [ShortLinkController::class, 'searchText']);
+
+Route::group(['prefix' => 'v1'], function () {
+    Route::get('/links', [ShortLinkController::class, 'index']);
+    Route::post('/links', [ShortLinkController::class, 'store']);
+    Route::get('/links/{id}', [ShortLinkController::class, 'show']);
+    Route::put('/links/{id}', [ShortLinkController::class, 'update']);
+    Route::delete('/links/{id}', [ShortLinkController::class, 'destroy']);
+    Route::get('/links/search/{text}', [ShortLinkController::class, 'searchText']);
+});
 
