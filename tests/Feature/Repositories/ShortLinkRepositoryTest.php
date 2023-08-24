@@ -15,7 +15,6 @@ use Tests\TestCase;
 
 class ShortLinkRepositoryTest extends TestCase
 {
-    use RefreshDatabase;
 
     protected $shortLinkRepository;
 

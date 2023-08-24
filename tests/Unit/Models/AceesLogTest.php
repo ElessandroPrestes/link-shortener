@@ -2,24 +2,23 @@
 
 namespace Tests\Unit\Models;
 
-use App\Models\ShortLink;
+use App\Models\AccesLog;
 use Illuminate\Database\Eloquent\Model;
 use PHPUnit\Framework\TestCase;
 
-class ShorLinkTest extends BaseModelTestCase
+class AceesLogTest extends BaseModelTestCase
 {
+
     protected function model(): Model
     {
-        return new ShortLink();
+        return new AccesLog();
     }
-
     protected function fillable(): array
     {
         return [
-            'original_url',
-            'short_code',
-            'access_count'
+            'short_link_id',
+            'ip_address',
+            'user_agent'
         ];
     }
-    
 }

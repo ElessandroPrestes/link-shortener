@@ -2,7 +2,8 @@
 
 namespace App\Repositories;
 
-use App\Interfaces\Repositories\ShortLinkInterface;
+use App\Interfaces\Repositories\ShortLinkRepositoryInterface;
+use App\Models\AccessLog;
 use App\Models\ShortLink;
 use App\Services\CacheService;
 use Illuminate\Database\Eloquent\Model;
@@ -11,7 +12,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 
-class ShortLinkRepository implements ShortLinkInterface
+class ShortLinkRepository implements ShortLinkRepositoryInterface
 {
     protected $modelShortLink;
     
@@ -49,22 +50,22 @@ class ShortLinkRepository implements ShortLinkInterface
         return $this->modelShortLink->create($data);
     }
 
-    public function searchText(string $link)
+    public function searchCode(string $shortCode)
     {
-        $cacheKey = 'short-link:' . $link;
+        $cacheKey = 'short_code:' . $shortCode;
 
         if ($this->cacheService->has($cacheKey)) {
             return $this->cacheService->get($cacheKey);
         }
 
         try {
-             $query =  $this->modelShortLink->where('original_url', 'LIKE', "%$link%")
-                                            ->orWhere('identifier', 'LIKE', "%$link%")
+             $query =  $this->modelShortLink->where('original_url', 'LIKE', "%$shortCode%")
+                                            ->orWhere('short_code', 'LIKE', "%$shortCode%")
                                             ->orderBy('created_at', 'desc')
                                             ->get();
              if (!$query)
                 {
-                    throw new NotFoundHttpException('Short Link Not Found');
+                    throw new NotFoundHttpException('Short Code  Not Found');
                 }
 
             $this->cacheService->put($cacheKey, $query, now()->addMinutes(10));
@@ -72,7 +73,7 @@ class ShortLinkRepository implements ShortLinkInterface
             return $query;
             
         } catch (\Throwable $th) {
-            throw new NotFoundHttpException('Short Link Not Found', $th);
+            throw new NotFoundHttpException('Short Code Not Found', $th);
         }
         
     }

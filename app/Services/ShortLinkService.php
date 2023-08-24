@@ -26,17 +26,17 @@ class ShortLinkService
 
     public function storeLink(array $data)
     {
-        if (!isset($data['identifier'])) {
-            $data['identifier'] = Str::random(rand(6, 8));
+        if (!isset($data['short_code'])) {
+            $data['short_code'] = Str::random(rand(6, 8));
         }
 
         return Bus::dispatch(new CreateShortLinkJob($data));
 
     }
 
-    public function searchText(string $link)
+    public function searchCode(string $shortCode)
     {
-        return $this->shortLinkRepository->searchText($link);
+        return $this->shortLinkRepository->searchText($shortCode);
     }
 
     public function updateLink(int $id, array $data)
@@ -44,9 +44,9 @@ class ShortLinkService
         
         if ($this->shortLinkRepository->getLinkById($id))
          {
-            if (!isset($data['identifier']))
+            if (!isset($data['short_code']))
              {
-                $data['identifier'] = Str::random(rand(6, 8));
+                $data['short_code'] = Str::random(rand(6, 8));
             }
         
             Bus::dispatch(new UpdateShortLinkJob($id, $data));
@@ -66,6 +66,5 @@ class ShortLinkService
     {
         return $this->shortLinkRepository->deleteLink($id);
     }
-   
 
 }

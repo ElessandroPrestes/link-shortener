@@ -2,9 +2,12 @@
 
 namespace App\Observers;
 
+use App\Models\AccessLog;
 use Illuminate\Support\Str;
 use App\Models\ShortLink;
 use Illuminate\Support\Facades\Cache;
+use App\Services\AccessLogService;
+use Illuminate\Support\Facades\Log;
 
 class ShortLinkObserver
 {
@@ -14,10 +17,12 @@ class ShortLinkObserver
     public function creating(ShortLink $shortLink): void
     {
         // Garante que o identificador Único seja atribuido a cada link encurtado
-        if (!$shortLink->identifier) {
-            $shortLink->identifier = substr(str_shuffle('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'), 0, rand(6, 8));
-        }
+        if (!$shortLink->short_code)
+         {
+            $shortLink->short_code = substr(str_shuffle('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'), 0, rand(6, 8));
+         }  
     }
+
 
     /**
      * Handle the ShortLink "updated" event.

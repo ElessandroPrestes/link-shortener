@@ -23,7 +23,7 @@ class StoreShortLinkRequest extends FormRequest
     {
         return [
             'original_url' => 'required|url',
-            'identifier' => 'nullable|unique:short_links|min:6|max:8',
+            'short_code' => 'nullable|unique:short_links|min:6|max:8',
         ];
     }
 
@@ -32,9 +32,9 @@ class StoreShortLinkRequest extends FormRequest
         return [
             'original_url.required' => 'The URL is required.',
             'original_url.url' => 'The link must be a valid URL.',
-            'identifier.unique' => 'The identifier has already been taken.',
-            'identifier.min' => 'The identifier must be at least 6 characters.',
-            'identifier.max' => 'The identifier may not be greater than 8 characters.',
+            'short_code.unique' => 'The identifier has already been taken.',
+            'short_code.min' => 'The identifier must be at least 6 characters.',
+            'short_code.max' => 'The identifier may not be greater than 8 characters.',
         ];
     }
 }

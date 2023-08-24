@@ -11,13 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('short_links', function (Blueprint $table) {
+        Schema::create('access_logs', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->string('original_url');
-            $table->string('short_code')->unique();
-            $table->unsignedInteger('access_count')->default(0); 
+            $table->unsignedBigInteger('short_link_id');
+            $table->string('ip_address');
+            $table->string('user_agent');
             $table->timestamps();
             $table->softDeletes();
+
+            $table->foreign('short_link_id')->references('id')->on('short_links');
         });
     }
 
@@ -26,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('short_links');
+        Schema::dropIfExists('acces_logs');
     }
 };

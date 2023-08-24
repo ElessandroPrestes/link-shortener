@@ -2,15 +2,14 @@
 
 namespace App\Interfaces\Repositories;
 
-use Illuminate\Support\Collection;
 
-interface ShortLinkInterface
+interface ShortLinkRepositoryInterface
 {
     public function getAllLinks();
     
     public function createLink(array $data);
 
-    public function searchText(string $link);
+    public function searchCode(string $shortCode);
 
     public function getLinkById(int $id);
 

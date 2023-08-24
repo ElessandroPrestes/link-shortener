@@ -24,7 +24,7 @@ class ShortLinkResource extends JsonResource
         return [
             'id' => $this->id,
             'original_url' => $this->original_url,
-            'identifier' => $this->identifier,
+            'short_code' => $this->short_code,
             'created_at' =>$this->created_at->format('d-m-Y:i:s'),
             'updated_at' =>$this->updated_at->format('d-m-Y:i:s'),
             'deleted_at' => $this->deleted_at ? $this->deleted_at->format('d-m-Y H:i:s') : null,
