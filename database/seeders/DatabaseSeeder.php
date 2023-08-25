@@ -14,8 +14,9 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-           ShortLinkSeeder::class,
-           AccessLogSeeder::class
+            UserSeeder::class,
+            ShortLinkSeeder::class,
+            AccessLogSeeder::class
         ]);
     }
 }

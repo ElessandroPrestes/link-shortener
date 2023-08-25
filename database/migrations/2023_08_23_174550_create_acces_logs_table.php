@@ -19,7 +19,7 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->foreign('short_link_id')->references('id')->on('short_links');
+            $table->foreign('short_link_id')->references('id')->on('short_links')->onDelete('cascade');
         });
     }
 

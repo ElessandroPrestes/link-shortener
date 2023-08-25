@@ -63,10 +63,11 @@ class ShortLinkRepository implements ShortLinkRepositoryInterface
                                             ->orWhere('short_code', 'LIKE', "%$shortCode%")
                                             ->orderBy('created_at', 'desc')
                                             ->get();
-             if (!$query)
-                {
-                    throw new NotFoundHttpException('Short Code  Not Found');
-                }
+
+             if ($query->isEmpty())
+              {
+                    throw new NotFoundHttpException('Short Code Not Found');
+              }
 
             $this->cacheService->put($cacheKey, $query, now()->addMinutes(10));
 

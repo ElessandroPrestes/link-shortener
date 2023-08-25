@@ -13,11 +13,15 @@ return new class extends Migration
     {
         Schema::create('short_links', function (Blueprint $table) {
             $table->bigIncrements('id');
+            $table->unsignedBigInteger('user_id');
             $table->string('original_url');
             $table->string('short_code')->unique();
             $table->unsignedInteger('access_count')->default(0); 
+            $table->date('expiration_date');
             $table->timestamps();
             $table->softDeletes();
+
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
     }
 

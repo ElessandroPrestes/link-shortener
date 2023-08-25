@@ -2,8 +2,9 @@
 
 namespace Tests\Feature\Repositories;
 
-use App\Interfaces\Repositories\ShortLinkInterface;
+use App\Interfaces\Repositories\ShortLinkRepositoryInterface;
 use App\Models\ShortLink;
+use App\Models\User;
 use App\Repositories\ShortLinkRepository;
 use App\Services\CacheService;
 use Carbon\Carbon;
@@ -35,7 +36,7 @@ class ShortLinkRepositoryTest extends TestCase
     public function implements_interface_short_link()
     {
         $this->assertInstanceOf(
-                ShortLinkInterface::class,
+                ShortLinkRepositoryInterface::class,
                 $this->shortLinkRepository
         );
     }
@@ -48,7 +49,7 @@ class ShortLinkRepositoryTest extends TestCase
         $this->expectException(QueryException::class);
 
         $shortLink = [
-            'identifier' => 1,
+            'short_code' => 1,
         ];
 
         $this->shortLinkRepository->createLink($shortLink); 
@@ -59,21 +60,22 @@ class ShortLinkRepositoryTest extends TestCase
      */
     public function create_short_link()
     {
-       $shortLink = [
-           'original_url' => 'https://www.google.com',
-           'identifier' => 'fake123',
-       ];
+        $user = User::factory()->create();
 
-        $response = $this->shortLinkRepository->createLink($shortLink);
+        $data = [
+            'user_id' => $user->id,
+            'original_url' => fake()->url,
+            'short_code' => 'fake123',
+            'access_count' => 0,
+            'expiration_date' => '2021-10-10',
+            
+        ];
+
+        $response = $this->shortLinkRepository->createLink($data);
 
         $this->assertArrayHasKey('id', $response);
 
-        $this->assertEquals($response['original_url'], $shortLink['original_url']);
-    }
-
-    public function tearDown(): void
-    {
-        Mockery::close();
+        $this->assertEquals($response['original_url'], $data['original_url']);
     }
 
     /**
@@ -120,14 +122,11 @@ class ShortLinkRepositoryTest extends TestCase
      */
     public function it_throws_404_exception_when_short_link_not_found_by_text()
     {
-        try {
+        $this->expectException(NotFoundHttpException::class);
 
-            $this->shortLinkRepository->searchText('non_ecziste_link');
+        $this->expectExceptionMessage('Short Code Not Found');
 
-        } catch (NotFoundHttpException $e) {
-
-            $this->assertEquals('Short Link Not Found', $e->getMessage());
-        }  
+        $this->shortLinkRepository->searchCode('non_existent_code');
         
     }
 
@@ -138,14 +137,14 @@ class ShortLinkRepositoryTest extends TestCase
     {
         $shortLink = ShortLink::factory()->create([
             'original_url' => 'https://test.com',
-            'identifier' => 'test123'
+            'short_code' => 'test123'
         ]);
         $shortLink2 = ShortLink::factory()->create([
             'original_url' => 'https://test.com',
-            'identifier' => 'test124'
+            'short_code' => 'test124'
         ]);
 
-        $retrievedLinks = $this->shortLinkRepository->searchText('test123');
+        $retrievedLinks = $this->shortLinkRepository->searchCode('test123');
 
         $this->assertCount(1, $retrievedLinks);
 

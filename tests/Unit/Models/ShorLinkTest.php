@@ -16,9 +16,11 @@ class ShorLinkTest extends BaseModelTestCase
     protected function fillable(): array
     {
         return [
+            'user_id',
             'original_url',
             'short_code',
-            'access_count'
+            'expiration_date',
+            'access_count',
         ];
     }
     
