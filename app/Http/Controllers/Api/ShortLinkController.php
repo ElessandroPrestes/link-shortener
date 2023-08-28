@@ -91,7 +91,7 @@ class ShortLinkController extends Controller
     */
     public function store(StoreShortLinkRequest $request)
     {
-        $shortLink = $this->shortLinkService->storeLink($request->validated());
+        $this->shortLinkService->storeLink($request->validated());
 
         return response([
             'message' => 'Short Link Registered'
@@ -202,7 +202,6 @@ class ShortLinkController extends Controller
     public function update(UpdateShortLinkRequest $request, int $id)
     {
        $this->shortLinkService->updateLink($id, $request->validated());
-       Log::info('Request Data:', $request->all());
       
         return response()->json([
             'message' => 'Short Link Updated'
@@ -255,7 +254,7 @@ class ShortLinkController extends Controller
     *         name="ID", 
     *         in="path", 
     *         required=true, 
-    *         description="Text of the Short Link to be retrieved.",
+    *         description="Text of the Short Code to be retrieved.",
     *         @OA\Schema(
     *             type="string" 
     *         )
@@ -269,21 +268,21 @@ class ShortLinkController extends Controller
     *         )
     *     ),
     *     @OA\Response(
-    *         response=404,description="Short Link Not Found",
+    *         response=404,description="Short Code Not Found",
     *          @OA\JsonContent(
     *              type="object",
-    *              @OA\Property(property="message", type="string", example="Short Link Not Found")
+    *              @OA\Property(property="message", type="string", example="Short Code Not Found")
     *          )
     *     ),
     * )
     */
-    public function searchText(string $text)
+    public function searchCode(string $slug)
     {
-        $link = $this->shortLinkService->searchText($text);
+        $link = $this->shortLinkService->searchCode($slug);
 
         return response([
             'data'=> ShortLinkResource::collection($link),
-            'message' => 'Short Link listed BY Text'
+            'message' => 'Short Code listed BY Text'
        ], 200);
     }
 }

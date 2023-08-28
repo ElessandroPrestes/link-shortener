@@ -19,9 +19,9 @@ class CacheService implements CacheServiceInterface
         return Cache::get($key);
     }
 
-    public function put(string $key, $value, $ttl)
+    public function put(string $key, $value, $ttl = 900)
     {
-        return Cache::put($key, $value, $ttl);
+        return Cache::put($key, $value, now()->addSeconds($ttl));
     }
 
     public function forget(string $key)

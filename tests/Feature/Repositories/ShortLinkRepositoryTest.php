@@ -3,13 +3,15 @@
 namespace Tests\Feature\Repositories;
 
 use App\Interfaces\Repositories\ShortLinkRepositoryInterface;
+use App\Models\AccessLog;
 use App\Models\ShortLink;
 use App\Models\User;
+use App\Repositories\AccessLogRepository;
 use App\Repositories\ShortLinkRepository;
 use App\Services\CacheService;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Collection;
 use Mockery;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Tests\TestCase;
@@ -21,14 +23,25 @@ class ShortLinkRepositoryTest extends TestCase
 
     protected $cacheService;
 
+    protected $accessLogRepository;
+
 
     protected function setUp(): void
     {
         $this->cacheService = new CacheService();
-        $this->shortLinkRepository = new ShortLinkRepository(new ShortLink(), $this->cacheService);
+        
+        $accessLogModel = new AccessLog();
+
+        $this->accessLogRepository = new AccessLogRepository($accessLogModel);
+
+        $this->shortLinkRepository = new ShortLinkRepository(new ShortLink(),
+             $this->cacheService,
+             $this->accessLogRepository);
 
         parent::setUp();
     }
+
+   
 
     /**
      * @test
@@ -36,12 +49,12 @@ class ShortLinkRepositoryTest extends TestCase
     public function implements_interface_short_link()
     {
         $this->assertInstanceOf(
-                ShortLinkRepositoryInterface::class,
-                $this->shortLinkRepository
+            ShortLinkRepositoryInterface::class,
+            $this->shortLinkRepository
         );
     }
-    
-     /**
+
+    /**
      * @test
      */
     public function create_short_link_exception()
@@ -52,7 +65,7 @@ class ShortLinkRepositoryTest extends TestCase
             'short_code' => 1,
         ];
 
-        $this->shortLinkRepository->createLink($shortLink); 
+        $this->shortLinkRepository->createLink($shortLink);
     }
 
     /**
@@ -68,7 +81,7 @@ class ShortLinkRepositoryTest extends TestCase
             'short_code' => 'fake123',
             'access_count' => 0,
             'expiration_date' => '2021-10-10',
-            
+
         ];
 
         $response = $this->shortLinkRepository->createLink($data);
@@ -76,6 +89,12 @@ class ShortLinkRepositoryTest extends TestCase
         $this->assertArrayHasKey('id', $response);
 
         $this->assertEquals($response['original_url'], $data['original_url']);
+    }
+
+    protected function tearDown(): void
+    {
+        Mockery::close();
+        parent::tearDown();
     }
 
     /**
@@ -88,34 +107,34 @@ class ShortLinkRepositoryTest extends TestCase
 
         $cacheServiceMock = Mockery::mock(CacheService::class);
         $cacheServiceMock
-            ->shouldReceive('get')
-            ->once()
+            ->shouldReceive('has')
             ->with($cacheKey)
-            ->andReturn(null);
+            ->andReturn(true);
 
-            $modelShortLinkMock = Mockery::mock(ShortLink::class);
-            $modelShortLinkMock
+        $cacheServiceMock
+            ->shouldReceive('get')
+            ->with($cacheKey)
+            ->andReturn($dbResult);
+
+        $modelShortLinkMock = Mockery::mock(ShortLink::class);
+        $modelShortLinkMock
                 ->shouldReceive('orderBy')
-                ->once()
-                ->with('created_at', 'desc')
-                ->andReturnSelf();
-            $modelShortLinkMock
+                ->never();
+        $modelShortLinkMock
                 ->shouldReceive('get')
-                ->once()
-                ->andReturn($dbResult);
-
-                $cacheServiceMock
-                ->shouldReceive('put')
-                ->once()
-                ->with($cacheKey, $dbResult, Mockery::type(Carbon::class))
-                ->andReturnNull();
+                ->never();
     
-            $repository = new ShortLinkRepository($modelShortLinkMock, $cacheServiceMock,);
+            $accessLogRepositoryMock = Mockery::mock(AccessLogRepository::class);
+
+            $repository = new ShortLinkRepository($modelShortLinkMock, $cacheServiceMock, $accessLogRepositoryMock);
     
             $result = $repository->getAllLinks();
     
-            $this->assertEquals($dbResult, $result);
+            $this->assertInstanceOf(Collection::class, $result); // Verifica se o resultado é uma instância de Collection
+            $this->assertEquals($dbResult->toArray(), $result->toArray());
     }
+
+    
 
     /**
      * @test
@@ -127,7 +146,6 @@ class ShortLinkRepositoryTest extends TestCase
         $this->expectExceptionMessage('Short Code Not Found');
 
         $this->shortLinkRepository->searchCode('non_existent_code');
-        
     }
 
     /**
@@ -153,7 +171,6 @@ class ShortLinkRepositoryTest extends TestCase
         $this->assertEquals($shortLink->original_url, $retrievedLink->original_url);
 
         $this->assertEquals($shortLink->identifier, $retrievedLink->identifier);
-
     }
 
     /**
@@ -161,45 +178,43 @@ class ShortLinkRepositoryTest extends TestCase
      */
     public function it_throws_404_exception_when_short_link_not_found_by_id()
     {
-        $non_ecziste_link_id  = 999; 
+        $non_ecziste_link_id  = 999;
 
         $this->expectException(NotFoundHttpException::class);
-    
-        $this->shortLinkRepository->getLinkById($non_ecziste_link_id );
-    
-        
+
+        $this->shortLinkRepository->getLinkById($non_ecziste_link_id);
     }
     /**
-      * @test
-      */
-      public function it_returns_short_link_when_found_by_id()
-      {
-          $link = ShortLink::factory()->create();
-  
-          $response = $this->shortLinkRepository->getLinkById($link->id);
-  
-          $this->assertIsObject($response);
-      }
-      /**
-       * @test
-       */
-      public function it_throws_404_exception_when_trying_to_update_by_short_link_id_not_found()
-      {
-            $nonExistentLinkId = 888; 
+     * @test
+     */
+    public function it_returns_short_link_when_found_by_id()
+    {
+        $link = ShortLink::factory()->create();
 
-            $dataToUpdate = [
-                'original_url' => 'https://updated-link.com',
-            ];
+        $response = $this->shortLinkRepository->getLinkById($link->id);
 
-            $this->expectException(NotFoundHttpException::class);
+        $this->assertIsObject($response);
+    }
+    /**
+     * @test
+     */
+    public function it_throws_404_exception_when_trying_to_update_by_short_link_id_not_found()
+    {
+        $nonExistentLinkId = 888;
 
-            $this->shortLinkRepository->updateLink($nonExistentLinkId, $dataToUpdate);
-      }
+        $dataToUpdate = [
+            'original_url' => 'https://updated-link.com',
+        ];
 
-     /**
-      * @test
-      */
-      public function it_updates_short_link_when_found_by_id()
+        $this->expectException(NotFoundHttpException::class);
+
+        $this->shortLinkRepository->updateLink($nonExistentLinkId, $dataToUpdate);
+    }
+
+    /**
+     * @test
+     */
+    public function it_updates_short_link_when_found_by_id()
     {
         $link = ShortLink::factory()->create();
 
@@ -219,7 +234,7 @@ class ShortLinkRepositoryTest extends TestCase
         ]);
     }
 
-     /**
+    /**
      * @test
      */
     public function it_throws_404_exception_when_trying_to_deleted_by_short_link_id_not_found()
@@ -227,10 +242,9 @@ class ShortLinkRepositoryTest extends TestCase
         $this->expectException(NotFoundHttpException::class);
 
         $this->shortLinkRepository->deleteLink(888);
-
     }
 
-     /**
+    /**
      * @test
      */
     public function it_deleted_short_link_when_found_by_id()
@@ -245,5 +259,4 @@ class ShortLinkRepositoryTest extends TestCase
             $deleted == $link->id
         ]);
     }
-    
 }

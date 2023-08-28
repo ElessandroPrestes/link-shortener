@@ -17,10 +17,12 @@ return new class extends Migration
             $table->string('ip_address');
             $table->string('user_agent');
             $table->timestamps();
-            $table->softDeletes();
+            //$table->softDeletes();
 
             $table->foreign('short_link_id')->references('id')->on('short_links')->onDelete('cascade');
         });
+
+        
     }
 
     /**

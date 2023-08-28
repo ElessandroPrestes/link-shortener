@@ -9,11 +9,14 @@ interface ShortLinkRepositoryInterface
     
     public function createLink(array $data);
 
-    public function searchCode(string $shortCode);
-
     public function getLinkById(int $id);
 
     public function updateLink(int $id, array $data);
 
     public function deleteLink(int $id);
+
+    public function searchCode(string $slug);
+
+    public function handleShortCode(string $code);
+
 }

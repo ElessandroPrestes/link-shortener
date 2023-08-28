@@ -8,11 +8,13 @@ use Illuminate\Support\Facades\Bus;
 use App\Repositories\ShortLinkRepository;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class ShortLinkService
 {
     protected $shortLinkRepository;
+    protected $accessLogService;
 
     public function __construct(ShortLinkRepository $shortLinkRepository)
     {
@@ -26,31 +28,28 @@ class ShortLinkService
 
     public function storeLink(array $data)
     {
-        if (!isset($data['short_code'])) {
-            $data['short_code'] = Str::random(rand(6, 8));
-        }
 
-        return Bus::dispatch(new CreateShortLinkJob($data));
-
+        return $this->shortLinkRepository->createLink($data);
     }
 
-    public function searchCode(string $shortCode)
+    public function searchCode(string $slug)
     {
-        return $this->shortLinkRepository->searchText($shortCode);
+        try {
+            return $this->shortLinkRepository->searchCode($slug);
+        } catch (\Throwable $th) {
+            throw new NotFoundHttpException('Short Code Not Found');
+        }
     }
 
     public function updateLink(int $id, array $data)
     {
-        
-        if ($this->shortLinkRepository->getLinkById($id))
-         {
-            if (!isset($data['short_code']))
-             {
+
+        if ($this->shortLinkRepository->getLinkById($id)) {
+            if (!isset($data['short_code'])) {
                 $data['short_code'] = Str::random(rand(6, 8));
             }
-        
-            Bus::dispatch(new UpdateShortLinkJob($id, $data));
-        
+
+            return $this->shortLinkRepository->updateLink($id, $data);
         } else {
             throw new NotFoundHttpException('Short Link Not Found');
         }
@@ -61,10 +60,8 @@ class ShortLinkService
         return $this->shortLinkRepository->getLinkById($id);
     }
 
-
     public function destroyLink(int $id)
     {
         return $this->shortLinkRepository->deleteLink($id);
     }
-
 }

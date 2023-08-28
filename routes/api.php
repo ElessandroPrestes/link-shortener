@@ -26,6 +26,6 @@ Route::group(['prefix' => 'v1'], function () {
     Route::get('/links/{id}', [ShortLinkController::class, 'show']);
     Route::put('/links/{id}', [ShortLinkController::class, 'update']);
     Route::delete('/links/{id}', [ShortLinkController::class, 'destroy']);
-    Route::get('/links/search-code/{short-code}', [ShortLinkController::class, 'searchCode']);
+    Route::get('/links/search/{slug}', [ShortLinkController::class, 'searchCode']);
 });
 

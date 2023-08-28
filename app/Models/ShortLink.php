@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ShortLink extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
     protected $fillable = ['user_id', 'original_url', 'short_code', 'expiration_date', 'access_count',];
 
@@ -27,11 +27,5 @@ class ShortLink extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
-    }
-
-    public function linkValidator($query)
-    {
-        return $query->where('created_at', '>=', Carbon::now()->subDays(30))
-                     ->where('expiration_date', '>=', Carbon::now());
     }
 }

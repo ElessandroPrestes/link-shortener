@@ -23,11 +23,14 @@ class ShortLinkResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'user' => $this->user_id,
             'original_url' => $this->original_url,
-            'short_code' => $this->short_code,
+            'slug' => $this->short_code,
+            'access' => $this->access_count,
+            'expiration_date' => $this->expiration_date,
+            'access_log' => AccessLogResource::collection($this->whenLoaded('accessLogs')),
             'created_at' =>$this->created_at->format('d-m-Y:i:s'),
             'updated_at' =>$this->updated_at->format('d-m-Y:i:s'),
-            'deleted_at' => $this->deleted_at ? $this->deleted_at->format('d-m-Y H:i:s') : null,
         ];
     }
 }

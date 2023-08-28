@@ -6,6 +6,8 @@ use App\Interfaces\Repositories\ShortLinkRepositoryInterface;
 use App\Models\AccessLog;
 use App\Models\ShortLink;
 use App\Services\CacheService;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Illuminate\Support\Facades\Log;
@@ -15,68 +17,54 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 class ShortLinkRepository implements ShortLinkRepositoryInterface
 {
     protected $modelShortLink;
-    
+
     protected $cacheService;
 
-    public function __construct(ShortLink $shortLink, CacheService $cache)
+    protected $accessLogRepository;
+
+    public function __construct(ShortLink $shortLink, CacheService $cache,  AccessLogRepository $accessLogRepository)
     {
         $this->modelShortLink = $shortLink;
 
         $this->cacheService = $cache;
+
+        $this->accessLogRepository = $accessLogRepository;
     }
 
     public function getAllLinks()
     {
         $cacheKey = 'short-links:all';
 
-        if ($this->cacheService->get($cacheKey)) {
+        if ($this->cacheService->has($cacheKey)) {
             return $this->cacheService->get($cacheKey);
         }
 
-        $query = $this->modelShortLink->orderBy('created_at', 'desc')
-                                      ->get();
-        
+        $query = $this->modelShortLink->with('accessLogs')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
         if ($query->isEmpty()) {
             throw new NotFoundHttpException('No Short Links found');
         }
 
-        $this->cacheService->put($cacheKey, $query, now()->addMinutes(10));
+        $this->cacheService->put($cacheKey, $query);
 
         return $query;
     }
 
     public function createLink(array $data)
     {
-        return $this->modelShortLink->create($data);
-    }
+        $data['short_code'] = $this->handleShortCode($data['short_code']);
 
-    public function searchCode(string $shortCode)
-    {
-        $cacheKey = 'short_code:' . $shortCode;
+        $shortLink =  $this->modelShortLink->create($data);
 
-        if ($this->cacheService->has($cacheKey)) {
-            return $this->cacheService->get($cacheKey);
-        }
+        $this->accessLogRepository->createAccessLog([
+            'short_link_id' => $shortLink->id,
+            'ip_address' => request()->ip(),
+            'user_agent' => request()->userAgent()
+        ]);
 
-        try {
-             $query =  $this->modelShortLink->where('original_url', 'LIKE', "%$shortCode%")
-                                            ->orWhere('short_code', 'LIKE', "%$shortCode%")
-                                            ->orderBy('created_at', 'desc')
-                                            ->get();
-
-             if ($query->isEmpty())
-              {
-                    throw new NotFoundHttpException('Short Code Not Found');
-              }
-
-            $this->cacheService->put($cacheKey, $query, now()->addMinutes(10));
-
-            return $query;
-            
-        } catch (\Throwable $th) {
-            throw new NotFoundHttpException('Short Code Not Found', $th);
-        }
-        
+        return $shortLink;
     }
 
     public function getLinkById(int $id)
@@ -85,27 +73,29 @@ class ShortLinkRepository implements ShortLinkRepositoryInterface
 
         if ($this->cacheService->has($cacheKey)) {
             return $this->cacheService->get($cacheKey);
-       }
+        }
 
         try {
 
-            $query = $this->modelShortLink->findOrFail($id);
-            
-            return $query;
+            $query = $this->modelShortLink->with('accessLogs')
+                ->where('id', $id)
+                ->findOrFail($id);
 
+            $this->cacheService->put($cacheKey, $query);
+
+            return $query;
         } catch (ModelNotFoundException $th) {
 
             throw new NotFoundHttpException('Short Link Not Found');
         }
-
     }
 
     public function updateLink(int $id, array $data)
     {
         $shortLink = $this->getLinkById($id);
-    
+
         $shortLink->update($data);
-        
+
         return $shortLink;
     }
 
@@ -113,22 +103,54 @@ class ShortLinkRepository implements ShortLinkRepositoryInterface
     {
         try {
             $shortLink = $this->getLinkById($id);
-    
+
             $this->cacheService->forget('short-link:' . $id);
 
             $this->cacheService->forget('short-links:all');
-    
+
             $deleted = $shortLink->delete();
 
             if (!$deleted) {
                 throw new \Exception('Failed to delete Short Link');
             }
-            
-            return true;
 
+            return true;
         } catch (\Throwable $th) {
 
             throw new NotFoundHttpException('Short Link not found');
         }
+    }
+
+    public function searchCode(string $slug)
+    {
+        $cacheKey = 'short_code:' . $slug;
+
+        if ($this->cacheService->has($cacheKey)) {
+            return $this->cacheService->get($cacheKey);
+        }
+        $query = $this->modelShortLink
+            ->with('accessLogs')
+            ->where(function (Builder $query) use ($slug) {
+                $query->where('original_url', 'LIKE', "%$slug%")
+                ->orWhere('short_code', 'LIKE', "%$slug%");
+            })
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        if ($query->isEmpty()) {
+            throw new NotFoundHttpException('Short Code Not Found');
+        }
+
+        $this->cacheService->put($cacheKey, $query);
+
+        return $query;
+    }
+
+    public function handleShortCode(?string $code)
+    {
+        if (isset($code)) {
+            return $code; 
+        }
+        return Str::random(rand(6, 8));
     }
 }

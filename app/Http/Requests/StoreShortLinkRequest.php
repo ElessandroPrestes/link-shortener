@@ -22,19 +22,28 @@ class StoreShortLinkRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'user_id' => 'required|exists:users,id',
             'original_url' => 'required|url',
-            'short_code' => 'nullable|unique:short_links|min:6|max:8',
+            'short_code' => 'nullable|unique:short_links,short_code',
+            'access_count' => 'integer|min:0',
+            'expiration_date' => 'required|date',
         ];
     }
 
     public function messages()
     {
         return [
+            'user_id.required' => 'The user ID is required.',
+            'user_id.exists' => 'The selected user does not exist.',
             'original_url.required' => 'The URL is required.',
             'original_url.url' => 'The link must be a valid URL.',
             'short_code.unique' => 'The identifier has already been taken.',
             'short_code.min' => 'The identifier must be at least 6 characters.',
             'short_code.max' => 'The identifier may not be greater than 8 characters.',
+            'access_count.integer' => 'The access count must be an integer.',
+            'access_count.min' => 'The access count must be at least 0.',
+            'expiration_date.required' => 'The expiration date is required.',
+            'expiration_date.date' => 'The expiration date must be a valid date.',
         ];
     }
 }
