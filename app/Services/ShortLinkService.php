@@ -2,19 +2,13 @@
 
 namespace App\Services;
 
-use App\Jobs\CreateShortLinkJob;
-use App\Jobs\UpdateShortLinkJob;
-use Illuminate\Support\Facades\Bus;
 use App\Repositories\ShortLinkRepository;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class ShortLinkService
 {
     protected $shortLinkRepository;
-    protected $accessLogService;
 
     public function __construct(ShortLinkRepository $shortLinkRepository)
     {
@@ -28,7 +22,6 @@ class ShortLinkService
 
     public function storeLink(array $data)
     {
-
         return $this->shortLinkRepository->createLink($data);
     }
 
@@ -43,7 +36,6 @@ class ShortLinkService
 
     public function updateLink(int $id, array $data)
     {
-
         if ($this->shortLinkRepository->getLinkById($id)) {
             if (!isset($data['short_code'])) {
                 $data['short_code'] = Str::random(rand(6, 8));
@@ -64,4 +56,6 @@ class ShortLinkService
     {
         return $this->shortLinkRepository->deleteLink($id);
     }
+
+    
 }

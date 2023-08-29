@@ -19,7 +19,6 @@ return new class extends Migration
             $table->unsignedInteger('access_count')->default(0); 
             $table->date('expiration_date');
             $table->timestamps();
-            //$table->softDeletes();
 
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });

@@ -15,9 +15,7 @@ class ShortLinkRepositoryTest extends TestCase
 {
 
     protected $shortLinkRepository;
-
     protected $cacheService;
-
     protected $accessLogRepository;
 
 

@@ -7,8 +7,10 @@ use App\Http\Requests\StoreShortLinkRequest;
 use App\Http\Requests\UpdateShortLinkRequest;
 use App\Http\Resources\ShortLinkResource;
 use App\Services\ShortLinkService;
+use App\Services\RedirectionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
  * @OA\Info(
@@ -27,10 +29,13 @@ use Illuminate\Support\Facades\Log;
 class ShortLinkController extends Controller
 {
     protected $shortLinkService;
+    protected $redirectionService;
 
-    public function __construct(ShortLinkService $shortLinkService)
+    public function __construct(ShortLinkService $shortLinkService, RedirectionService $redirectionService)
     {
         $this->shortLinkService = $shortLinkService;
+
+        $this->redirectionService = $redirectionService;
     }
     
     /**
@@ -132,10 +137,10 @@ class ShortLinkController extends Controller
     */
     public function show(int $id)
     {
-        $id = $this->shortLinkService->showLink($id);
+        $linkId = $this->shortLinkService->showLink($id);
 
         return response([
-            'data'=> new ShortLinkResource($id),
+            'data'=> new ShortLinkResource($linkId),
             'message' => 'Short Link listed'
        ], 200);
     }
@@ -278,11 +283,50 @@ class ShortLinkController extends Controller
     */
     public function searchCode(string $slug)
     {
-        $link = $this->shortLinkService->searchCode($slug);
+        $shortCode = $this->shortLinkService->searchCode($slug);
 
         return response([
-            'data'=> ShortLinkResource::collection($link),
+            'data'=> ShortLinkResource::collection($shortCode),
             'message' => 'Short Code listed BY Text'
        ], 200);
+    }
+
+    /**
+    * @OA\Get(
+    *     path="/api/v1/redirect/{slug}",
+    *     operationId="redirectToOriginalUrl",
+    *     description="Redirect to the original URL",
+    *     tags={"Redirect"},
+    *     @OA\Parameter(
+    *         name="slug",
+    *         in="path",
+    *         required=true,
+    *         @OA\Schema(type="string"),
+    *         description="Short link slug"
+    *     ),
+    *     @OA\Response(
+    *         response=302,
+    *         description="Redirects to the original URL",
+    *         @OA\Header(
+    *             header="Location",
+    *             description="Original URL",
+    *             @OA\Schema(type="string")
+    *         )
+    *     ),
+    *     @OA\Response(
+    *         response=404,
+    *         description="Short link not found"
+    *     )
+    * )
+    */
+    public function redirectToOriginalUrl(string $slug, Request $request)
+    {
+        try {
+            $originalUrl = $this->redirectionService->redirectToOriginalUrl($slug, $request);
+            return redirect()->away($originalUrl, 302);
+        } catch (\Throwable $th) {
+            throw new NotFoundHttpException('Short link not found');
+        }
+        
     }
 }

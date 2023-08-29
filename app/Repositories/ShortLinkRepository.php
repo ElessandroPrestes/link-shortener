@@ -94,6 +94,11 @@ class ShortLinkRepository implements ShortLinkRepositoryInterface
     {
         $shortLink = $this->getLinkById($id);
 
+       if (isset($data['short_code']))
+        {
+            $data['short_code'] = $this->handleShortCode($data['short_code']);
+        }
+
         $shortLink->update($data);
 
         return $shortLink;
@@ -148,9 +153,20 @@ class ShortLinkRepository implements ShortLinkRepositoryInterface
 
     public function handleShortCode(?string $code)
     {
-        if (isset($code)) {
+        if ($code !==null) {
             return $code; 
         }
         return Str::random(rand(6, 8));
+    }
+
+    public function incrementAccessCount(int $id)
+    {
+        $shortCode = $this->getLinkById($id);
+       // dd($shortCode);
+
+        if ($shortCode) {
+            $shortCode->increment('access_count');
+        }
+
     }
 }

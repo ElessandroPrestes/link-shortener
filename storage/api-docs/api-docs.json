@@ -109,61 +109,13 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/ShortLinkResource"
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Short Link Not Found",
-                        "content": {
-                            "application/json": {
-                                "schema": {
                                     "properties": {
                                         "message": {
                                             "type": "string",
-                                            "example": "Short Link Not Found"
+                                            "example": "Short Link Registered"
                                         }
                                     },
                                     "type": "object"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/links/{link}": {
-            "get": {
-                "tags": [
-                    "Links"
-                ],
-                "description": "Retrieve a Short Link by Text.",
-                "operationId": "searchText",
-                "parameters": [
-                    {
-                        "name": "ID",
-                        "in": "path",
-                        "description": "Text of the Short Link to be retrieved.",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Short Link listed.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/ShortLinkResource"
-                                    }
                                 }
                             }
                         }
@@ -292,6 +244,137 @@
                         }
                     }
                 }
+            },
+            "delete": {
+                "tags": [
+                    "Links"
+                ],
+                "description": "Delete a short link",
+                "operationId": "destroyShortLink",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "The short link to delete",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Short link not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Short link not found"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/links/{link}": {
+            "get": {
+                "tags": [
+                    "Links"
+                ],
+                "description": "Retrieve a Short Link by Text.",
+                "operationId": "searchText",
+                "parameters": [
+                    {
+                        "name": "ID",
+                        "in": "path",
+                        "description": "Text of the Short Code to be retrieved.",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Short Link listed.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/ShortLinkResource"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Short Code Not Found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Short Code Not Found"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/redirect/{slug}": {
+            "get": {
+                "tags": [
+                    "Redirect"
+                ],
+                "description": "Redirect to the original URL",
+                "operationId": "redirectToOriginalUrl",
+                "parameters": [
+                    {
+                        "name": "slug",
+                        "in": "path",
+                        "description": "Short link slug",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "302": {
+                        "description": "Redirects to the original URL",
+                        "headers": {
+                            "Location": {
+                                "description": "Original URL",
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Short link not found"
+                    }
+                }
             }
         }
     },
@@ -302,9 +385,6 @@
                 "properties": {
                     "id": {
                         "type": "integer"
-                    },
-                    "uuid": {
-                        "type": "string"
                     },
                     "original_link": {
                         "type": "string"

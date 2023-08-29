@@ -19,4 +19,6 @@ interface ShortLinkRepositoryInterface
 
     public function handleShortCode(string $code);
 
+    public function incrementAccessCount(int $id);
+
 }
