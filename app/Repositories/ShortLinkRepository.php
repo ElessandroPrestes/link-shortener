@@ -162,8 +162,7 @@ class ShortLinkRepository implements ShortLinkRepositoryInterface
     public function incrementAccessCount(int $id)
     {
         $shortCode = $this->getLinkById($id);
-       // dd($shortCode);
-
+      
         if ($shortCode) {
             $shortCode->increment('access_count');
         }

@@ -130,7 +130,7 @@ class ShortLinkRepositoryTest extends TestCase
     
             $result = $repository->getAllLinks();
     
-            $this->assertInstanceOf(Collection::class, $result); // Verifica se o resultado é uma instância de Collection
+            $this->assertInstanceOf(Collection::class, $result);
             $this->assertEquals($dbResult->toArray(), $result->toArray());
     }
 

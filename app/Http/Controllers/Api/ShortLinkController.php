@@ -74,33 +74,49 @@ class ShortLinkController extends Controller
     *      @OA\RequestBody(
     *          required=true,
     *          @OA\JsonContent(
-    *               type="object",
-    *               @OA\Property(property="original_url", type="string", example="bit.ly/3LaMLtZ"),
-    *       )
-    *     ),
-    *       @OA\Response(
-    *          response=201,description="Link Register.",
-    *           @OA\JsonContent(
-    *              type="array",
-    *              @OA\Items(ref="#/components/schemas/ShortLinkResource")
+    *              type="object",
+    *              @OA\Property(property="original_url", type="string", example="bit.ly/3LaMLtZ"),
     *          )
     *      ),
-    *       @OA\Response(
-    *          response=422,description="Unprocessable Entity",
+    *      @OA\Response(
+    *          response=201,
+    *          description="Short Link Registered",
     *          @OA\JsonContent(
-    *               type="object",
+    *              type="object",
+    *              @OA\Property(property="message", type="string", example="Short Link Registered")
+    *          )
+    *      ),
+    *      @OA\Response(
+    *          response=400,  
+    *          description="Bad Request",
+    *          @OA\JsonContent(
+    *              type="object",
+    *              @OA\Property(property="message", type="string", example="Error Processing The Request")
+    *          )
+    *      ),
+    *      @OA\Response(
+    *          response=422,
+    *          description="Unprocessable Entity",
+    *          @OA\JsonContent(
+    *              type="object",
     *              @OA\Property(property="message", type="string", example="Unprocessable Entity")
-    *           )
-    *       ),
-    *     ),
+    *          )
+    *      ),
+    * )
     */
     public function store(StoreShortLinkRequest $request)
     {
-        $this->shortLinkService->storeLink($request->validated());
-
-        return response([
-            'message' => 'Short Link Registered'
-        ], 201);
+        try {
+            $this->shortLinkService->storeLink($request->validated());
+    
+            return response([
+                'message' => 'Short Link Registered'
+            ], 201);
+        } catch (\Exception $e) {
+            return response([
+                'message' => 'Error processing the request: ' . $e->getMessage()
+            ], 400);
+        }
     }
 
     /**
@@ -123,7 +139,7 @@ class ShortLinkController extends Controller
     *         description="Short Link listed.",
     *         @OA\JsonContent(
     *            type="object",
-    *              @OA\Property(property="message", type="string", example="Short Link Registered")
+    *              @OA\Property(property="message", type="string", example="Short Link Listed")
     *         )
     *     ),
     *     @OA\Response(
