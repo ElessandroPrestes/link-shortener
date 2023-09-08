@@ -21,4 +21,6 @@ interface ShortLinkRepositoryInterface
 
     public function incrementAccessCount(int $id);
 
+    public function validatePositiveIntegerId($id);
+
 }

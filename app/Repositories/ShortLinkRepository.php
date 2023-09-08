@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Exceptions\ShortLinkNotFoundException;
 use App\Interfaces\Repositories\ShortLinkRepositoryInterface;
 use App\Models\AccessLog;
 use App\Models\ShortLink;
@@ -11,8 +12,8 @@ use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
-
+use Illuminate\Http\Response;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 class ShortLinkRepository implements ShortLinkRepositoryInterface
 {
@@ -44,7 +45,7 @@ class ShortLinkRepository implements ShortLinkRepositoryInterface
             ->get();
 
         if ($query->isEmpty()) {
-            throw new NotFoundHttpException('No Short Links found');
+            throw new ShortLinkNotFoundException('No Short Links found');
         }
 
         $this->cacheService->put($cacheKey, $query);
@@ -75,19 +76,16 @@ class ShortLinkRepository implements ShortLinkRepositoryInterface
             return $this->cacheService->get($cacheKey);
         }
 
-        try {
+        $query = $this->modelShortLink->with('accessLogs')->find($id);
 
-            $query = $this->modelShortLink->with('accessLogs')
-                ->where('id', $id)
-                ->findOrFail($id);
-
-            $this->cacheService->put($cacheKey, $query);
-
-            return $query;
-        } catch (ModelNotFoundException $th) {
-
-            throw new NotFoundHttpException('Short Link Not Found');
+        if (!$query) {
+            throw new ShortLinkNotFoundException();
         }
+    
+        $this->cacheService->put($cacheKey, $query);
+    
+        return $query;
+       
     }
 
     public function updateLink(int $id, array $data)
@@ -106,24 +104,20 @@ class ShortLinkRepository implements ShortLinkRepositoryInterface
 
     public function deleteLink(int $id)
     {
-        try {
-            $shortLink = $this->getLinkById($id);
+       
+        $shortLink = $this->getLinkById($id);
 
-            $this->cacheService->forget('short-link:' . $id);
+        $this->cacheService->forget('short-link:' . $id);
+        $this->cacheService->forget('short-links:all');
 
-            $this->cacheService->forget('short-links:all');
+        $deleted = $shortLink->delete();
 
-            $deleted = $shortLink->delete();
-
-            if (!$deleted) {
-                throw new \Exception('Failed to delete Short Link');
-            }
-
-            return true;
-        } catch (\Throwable $th) {
-
-            throw new NotFoundHttpException('Short Link not found');
+        if (!$deleted) {
+            throw new ShortLinkNotFoundException();
         }
+
+        return true;
+       
     }
 
     public function searchCode(string $slug)
@@ -143,7 +137,7 @@ class ShortLinkRepository implements ShortLinkRepositoryInterface
             ->get();
 
         if ($query->isEmpty()) {
-            throw new NotFoundHttpException('Short Code Not Found');
+            throw new ShortLinkNotFoundException();
         }
 
         $this->cacheService->put($cacheKey, $query);
@@ -168,4 +162,13 @@ class ShortLinkRepository implements ShortLinkRepositoryInterface
         }
 
     }
+
+    public function validatePositiveIntegerId($id)
+    {
+        if (!ctype_digit($id) || intval($id) <= 0) {
+            throw new BadRequestHttpException('ID must be a positive integer', null, Response::HTTP_BAD_REQUEST);
+        }
+    }
+
+    
 }

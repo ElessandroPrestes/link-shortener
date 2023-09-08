@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Repositories;
 
+use App\Exceptions\ShortLinkNotFoundException;
 use App\Interfaces\Repositories\ShortLinkRepositoryInterface;
 use App\Models\AccessLog;
 use App\Models\ShortLink;
@@ -9,11 +10,9 @@ use App\Models\User;
 use App\Repositories\AccessLogRepository;
 use App\Repositories\ShortLinkRepository;
 use App\Services\CacheService;
-use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Collection;
 use Mockery;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Tests\TestCase;
 
 class ShortLinkRepositoryTest extends TestCase
@@ -141,9 +140,9 @@ class ShortLinkRepositoryTest extends TestCase
      */
     public function it_throws_404_exception_when_short_link_not_found_by_text()
     {
-        $this->expectException(NotFoundHttpException::class);
+        $this->expectException(ShortLinkNotFoundException::class);
 
-        $this->expectExceptionMessage('Short Code Not Found');
+        $this->expectExceptionMessage('Short Link not found');
 
         $this->shortLinkRepository->searchCode('non_existent_code');
     }
@@ -180,7 +179,9 @@ class ShortLinkRepositoryTest extends TestCase
     {
         $non_ecziste_link_id  = 999;
 
-        $this->expectException(NotFoundHttpException::class);
+        $this->expectException(ShortLinkNotFoundException::class);
+
+        $this->expectExceptionMessage('Short Link not found');
 
         $this->shortLinkRepository->getLinkById($non_ecziste_link_id);
     }
@@ -206,7 +207,7 @@ class ShortLinkRepositoryTest extends TestCase
             'original_url' => 'https://updated-link.com',
         ];
 
-        $this->expectException(NotFoundHttpException::class);
+        $this->expectException(ShortLinkNotFoundException::class);
 
         $this->shortLinkRepository->updateLink($nonExistentLinkId, $dataToUpdate);
     }
@@ -239,7 +240,7 @@ class ShortLinkRepositoryTest extends TestCase
      */
     public function it_throws_404_exception_when_trying_to_deleted_by_short_link_id_not_found()
     {
-        $this->expectException(NotFoundHttpException::class);
+        $this->expectException(ShortLinkNotFoundException::class);
 
         $this->shortLinkRepository->deleteLink(888);
     }

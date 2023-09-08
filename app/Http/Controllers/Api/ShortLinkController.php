@@ -3,13 +3,14 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ShowShortLinkRequest;
 use App\Http\Requests\StoreShortLinkRequest;
 use App\Http\Requests\UpdateShortLinkRequest;
 use App\Http\Resources\ShortLinkResource;
 use App\Services\ShortLinkService;
 use App\Services\RedirectionService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
@@ -151,14 +152,32 @@ class ShortLinkController extends Controller
     *     ),
     * )
     */
-    public function show(int $id)
+    public function show(Request $request,$id)
     {
-        $linkId = $this->shortLinkService->showLink($id);
 
-        return response([
-            'data'=> new ShortLinkResource($linkId),
-            'message' => 'Short Link listed'
-       ], 200);
+        try {
+
+            $this->shortLinkService->validatePositiveIntegerId($id); 
+
+            $link = $this->shortLinkService->showLink(intval($id));
+    
+            return response([
+                'data' => new ShortLinkResource($link),
+                'message' => 'Short Link listed'
+            ], 200);
+        }catch (BadRequestHttpException $e) { 
+                return response([
+                    'message' => $e->getMessage() 
+                ], $e->getStatusCode());
+        } catch (NotFoundHttpException $e) {
+            return response([
+                'message' => 'Short Link Not Found'
+            ], 404);
+        } catch (\Exception $e) {
+            return response([
+                'message' => 'An error occurred'
+            ], 500);
+        }
     }
 
     /**

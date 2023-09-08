@@ -2,8 +2,14 @@
 
 namespace App\Services;
 
+use App\Exceptions\ShortLinkNotFoundException;
+use App\Models\ShortLink;
 use App\Repositories\ShortLinkRepository;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use InvalidArgumentException;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class ShortLinkService
@@ -25,12 +31,24 @@ class ShortLinkService
         return $this->shortLinkRepository->createLink($data);
     }
 
-    public function searchCode(string $slug)
+    public function validatePositiveIntegerId($id)
+    {
+        if (!ctype_digit($id) || intval($id) <= 0) {
+            throw new BadRequestHttpException('ID must be a positive integer');
+        }
+    }
+
+    public function showLink(int $id)
     {
         try {
-            return $this->shortLinkRepository->searchCode($slug);
-        } catch (\Throwable $th) {
-            throw new NotFoundHttpException('Short Code Not Found');
+
+            $this->validatePositiveIntegerId($id);
+        
+            return $this->shortLinkRepository->getLinkById($id);
+
+
+        } catch (ModelNotFoundException $e) {
+            throw new ShortLinkNotFoundException();
         }
     }
 
@@ -43,18 +61,22 @@ class ShortLinkService
 
             return $this->shortLinkRepository->updateLink($id, $data);
         } else {
-            throw new NotFoundHttpException('Short Link Not Found');
+            throw new ShortLinkNotFoundException();
         }
-    }
-
-    public function showLink(int $id)
-    {
-        return $this->shortLinkRepository->getLinkById($id);
     }
 
     public function destroyLink(int $id)
     {
         return $this->shortLinkRepository->deleteLink($id);
+    }
+
+    public function searchCode(string $slug)
+    {
+        try {
+            return $this->shortLinkRepository->searchCode($slug);
+        } catch (\Throwable $th) {
+            throw new ShortLinkNotFoundException();
+        }
     }
 
     
