@@ -34,7 +34,7 @@ class RedirectionServiceTest extends TestCase
         $this->cacheService = new CacheService();
         $accessLogModel = new AccessLog();
         $this->accessLogRepository = new AccessLogRepository($accessLogModel);
-        $this->shortLinkRepository = new ShortLinkRepository(new ShortLink(), $this->cacheService, $this->accessLogRepository);
+        $this->shortLinkRepository = new ShortLinkRepository(new ShortLink(), $this->accessLogRepository);
         $this->redirectionService = new RedirectionService($this->shortLinkRepository);
     }
 
@@ -75,7 +75,7 @@ class RedirectionServiceTest extends TestCase
     /**
      * @test
      */
-    public function testRedirectToOriginalUrlWithInvalidSlug()
+    public function redirec_to_original_url_with_ith_invalide_slug()
     {
        $mockShortLinkRepository = Mockery::mock(ShortLinkRepository::class);
 

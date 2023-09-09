@@ -54,14 +54,33 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Link Register.",
+                        "description": "Short Link Registered",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/ShortLinkResource"
-                                    }
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Short Link Registered"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Error Processing The Request"
+                                        }
+                                    },
+                                    "type": "object"
                                 }
                             }
                         }
@@ -112,7 +131,7 @@
                                     "properties": {
                                         "message": {
                                             "type": "string",
-                                            "example": "Short Link Registered"
+                                            "example": "Short Link Listed"
                                         }
                                     },
                                     "type": "object"

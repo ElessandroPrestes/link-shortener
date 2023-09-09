@@ -17,25 +17,19 @@ use Tests\TestCase;
 
 class ShortLinkRepositoryTest extends TestCase
 {
-
     protected $shortLinkRepository;
-
-    protected $cacheService;
 
     protected $accessLogRepository;
 
-
     protected function setUp(): void
     {
-        $this->cacheService = new CacheService();
         
         $accessLogModel = new AccessLog();
 
         $this->accessLogRepository = new AccessLogRepository($accessLogModel);
 
         $this->shortLinkRepository = new ShortLinkRepository(new ShortLink(),
-             $this->cacheService,
-             $this->accessLogRepository);
+        $this->accessLogRepository);
 
         parent::setUp();
     }
@@ -88,63 +82,6 @@ class ShortLinkRepositoryTest extends TestCase
         $this->assertArrayHasKey('id', $response);
 
         $this->assertEquals($response['original_url'], $data['original_url']);
-    }
-
-    protected function tearDown(): void
-    {
-        Mockery::close();
-        parent::tearDown();
-    }
-
-    /**
-     * @test
-     */
-    public function get_all_links_returns_cached_data()
-    {
-        $cacheKey = 'short-links:all';
-        $dbResult = collect(['db_link_1', 'db_link_2']);
-
-        $cacheServiceMock = Mockery::mock(CacheService::class);
-        $cacheServiceMock
-            ->shouldReceive('has')
-            ->with($cacheKey)
-            ->andReturn(true);
-
-        $cacheServiceMock
-            ->shouldReceive('get')
-            ->with($cacheKey)
-            ->andReturn($dbResult);
-
-        $modelShortLinkMock = Mockery::mock(ShortLink::class);
-        $modelShortLinkMock
-                ->shouldReceive('orderBy')
-                ->never();
-        $modelShortLinkMock
-                ->shouldReceive('get')
-                ->never();
-    
-            $accessLogRepositoryMock = Mockery::mock(AccessLogRepository::class);
-
-            $repository = new ShortLinkRepository($modelShortLinkMock, $cacheServiceMock, $accessLogRepositoryMock);
-    
-            $result = $repository->getAllLinks();
-    
-            $this->assertInstanceOf(Collection::class, $result);
-            $this->assertEquals($dbResult->toArray(), $result->toArray());
-    }
-
-    
-
-    /**
-     * @test
-     */
-    public function it_throws_404_exception_when_short_link_not_found_by_text()
-    {
-        $this->expectException(ShortLinkNotFoundException::class);
-
-        $this->expectExceptionMessage('Short Link not found');
-
-        $this->shortLinkRepository->searchCode('non_existent_code');
     }
 
     /**

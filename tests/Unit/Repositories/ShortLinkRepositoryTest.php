@@ -15,29 +15,22 @@ class ShortLinkRepositoryTest extends TestCase
 {
 
     protected $shortLinkRepository;
-    protected $cacheService;
     protected $accessLogRepository;
 
 
     protected function setUp(): void
     {
-        $this->cacheService = new CacheService();
 
         $accessLogModel = new AccessLog();
 
         $this->accessLogRepository = new AccessLogRepository($accessLogModel);
 
-        $this->shortLinkRepository = new ShortLinkRepository(new ShortLink(), $this->cacheService, $this->accessLogRepository);
+        $this->shortLinkRepository = new ShortLinkRepository(new ShortLink(), $this->accessLogRepository);
 
         parent::setUp();
     }
     
-    protected function tearDown(): void
-    {
-        parent::tearDown();
-        Mockery::close();
-    }
-
+   
     /**
      * @test
      */
@@ -45,12 +38,6 @@ class ShortLinkRepositoryTest extends TestCase
      public function handle_short_code_generates_random_code()
     {
        
-        $mockStr = Mockery::mock(Str::class);
-        $mockStr->shouldReceive('random')
-            ->andReturn('mocked_random_code');
-
-        app()->instance(Str::class, $mockStr);
-
         $randomCode = $this->shortLinkRepository->handleShortCode(null);
 
         $this->assertIsString($randomCode);

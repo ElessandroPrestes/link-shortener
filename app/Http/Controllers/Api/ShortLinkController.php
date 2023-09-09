@@ -2,14 +2,17 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Exceptions\ShortLinkNotFoundException;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\ShowShortLinkRequest;
 use App\Http\Requests\StoreShortLinkRequest;
 use App\Http\Requests\UpdateShortLinkRequest;
 use App\Http\Resources\ShortLinkResource;
+use App\Interfaces\Services\RedirectionServiceInterface;
+use App\Interfaces\Services\ShortLinkServiceInterface;
 use App\Services\ShortLinkService;
-use App\Services\RedirectionService;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -29,13 +32,13 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class ShortLinkController extends Controller
 {
-    protected $shortLinkService;
-    protected $redirectionService;
-
-    public function __construct(ShortLinkService $shortLinkService, RedirectionService $redirectionService)
+   
+    public function __construct(
+        protected ShortLinkService $shortLinkService,
+        protected RedirectionServiceInterface $redirectionService
+    )
     {
         $this->shortLinkService = $shortLinkService;
-
         $this->redirectionService = $redirectionService;
     }
     
@@ -64,7 +67,7 @@ class ShortLinkController extends Controller
         return response([
             'data' => ShortLinkResource::collection($links),
             'message' => 'Links listed'
-        ], 200);
+        ], Response::HTTP_OK);
     }
 
     /**
@@ -112,10 +115,10 @@ class ShortLinkController extends Controller
     
             return response([
                 'message' => 'Short Link Registered'
-            ], 201);
-        } catch (\Exception $e) {
+            ],  Response::HTTP_CREATED);
+        } catch (BadRequestException $e) {
             return response([
-                'message' => 'Error processing the request: ' . $e->getMessage()
+                'message' => $e->getMessage() 
             ], 400);
         }
     }
@@ -152,31 +155,27 @@ class ShortLinkController extends Controller
     *     ),
     * )
     */
-    public function show(Request $request,$id)
+    public function show($id)
     {
-
         try {
-
-            $this->shortLinkService->validatePositiveIntegerId($id); 
-
-            $link = $this->shortLinkService->showLink(intval($id));
+            $link = $this->shortLinkService->showLink($id);
     
             return response([
                 'data' => new ShortLinkResource($link),
                 'message' => 'Short Link listed'
-            ], 200);
+            ], Response::HTTP_OK);
         }catch (BadRequestHttpException $e) { 
                 return response([
                     'message' => $e->getMessage() 
-                ], $e->getStatusCode());
-        } catch (NotFoundHttpException $e) {
+                ], Response::HTTP_BAD_REQUEST);
+        } catch (ShortLinkNotFoundException $e) {
             return response([
-                'message' => 'Short Link Not Found'
-            ], 404);
+                'message' => $e->getMessage()
+            ], $e->getCode());
         } catch (\Exception $e) {
             return response([
                 'message' => 'An error occurred'
-            ], 500);
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -243,9 +242,9 @@ class ShortLinkController extends Controller
     {
        $this->shortLinkService->updateLink($id, $request->validated());
       
-        return response()->json([
+        return response()([
             'message' => 'Short Link Updated'
-        ], 200);
+        ], Response::HTTP_OK);
     }
 
     /**
@@ -279,9 +278,9 @@ class ShortLinkController extends Controller
     {
         $this->shortLinkService->destroyLink($id);
 
-        return response()->json([
+        return response()([
             'message' => 'Deleted'
-        ], 204);
+        ], Response::HTTP_NO_CONTENT);
     }
 
     /**
@@ -318,12 +317,20 @@ class ShortLinkController extends Controller
     */
     public function searchCode(string $slug)
     {
-        $shortCode = $this->shortLinkService->searchCode($slug);
 
-        return response([
-            'data'=> ShortLinkResource::collection($shortCode),
-            'message' => 'Short Code listed BY Text'
-       ], 200);
+        try {
+            $shortCode = $this->shortLinkService->searchCode($slug);
+
+            return response([
+                'data'=> ShortLinkResource::collection($shortCode),
+                'message' => 'Short Code listed BY Text'
+            ], Response::HTTP_OK);
+        } catch (ShortLinkNotFoundException $e) {
+            return response([
+                'message' => $e->getMessage()
+            ], $e->getCode());
+        }
+        
     }
 
     /**
@@ -358,7 +365,7 @@ class ShortLinkController extends Controller
     {
         try {
             $originalUrl = $this->redirectionService->redirectToOriginalUrl($slug, $request);
-            return redirect()->away($originalUrl, 302);
+            return redirect()->away($originalUrl, Response::HTTP_FOUND);
         } catch (\Throwable $th) {
             throw new NotFoundHttpException('Short link not found');
         }
